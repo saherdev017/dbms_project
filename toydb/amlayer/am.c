@@ -1,11 +1,12 @@
 # include <stdio.h>
+#include<strings.h>
 # include "am.h"
 # include "pf.h"
 
 
 /* splits a leaf node */
 
-AM_SplitLeaf(fileDesc,pageBuf,pageNum,attrLength,recId,value,status,index,key)
+int AM_SplitLeaf(fileDesc,pageBuf,pageNum,attrLength,recId,value,status,index,key)
 int fileDesc; /* file descriptor */
 char *pageBuf; /* pointer to buffer */
 int *pageNum; /* pagenumber of new leaf created */
@@ -109,7 +110,7 @@ char *key; /* returns the key to be filled in the parent */
 }
 
 /* Adds to the parent(on top of the path stack) attribute value and page Number*/
-AM_AddtoParent(fileDesc,pageNum,value,attrLength)
+int AM_AddtoParent(fileDesc,pageNum,value,attrLength)
 int fileDesc;
 int pageNum; /* page Number to be added to parent */
 char *value; /*  pointer to attribute value to be added - 

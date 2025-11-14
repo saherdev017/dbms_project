@@ -1,6 +1,6 @@
 /* testpf.c */
-
 #include <stdio.h>
+#include <string.h>   /* for strcmp */
 #include <stdlib.h>
 #include "pftypes.h"
 #include "pf.h"
@@ -24,7 +24,7 @@ void writefile(char *fname);
 void readfile(char *fname);
 void printfile(int fd);
 
-int main(void)
+int main( int argc, char *argv[])
 {
 int error;
 int i;
@@ -33,9 +33,24 @@ char *buf;
 int *buf1,*buf2;
 int fd1,fd2;
 
+   PF_Init();
+    /* Choose replacement policy from command line:
+       ./testpf lru   or   ./testpf mru
+       Default = LRU if nothing is given or unknown arg. */
+    if (argc > 1 && strcmp(argv[1], "mru") == 0) {
+        PF_SetReplacementPolicy(PF_REPL_MRU);
+        printf("Using MRU replacement policy\n");
+    } else {
+        PF_SetReplacementPolicy(PF_REPL_LRU);
+        printf("Using LRU replacement policy\n");
+    }
+
+    /* Small buffer size so we FORCE replacement to happen */
+    PF_SetBufferSize(5);   /* or 3 or 4 depending on what you want */
+
     PF_ResetStats(); 
-	// PF_SetReplacementPolicy(PF_REPL_LRU);   /* LRU policy */
-    PF_SetReplacementPolicy(PF_REPL_MRU);   /* MRU policy */
+	// // PF_SetReplacementPolicy(PF_REPL_LRU);   /* LRU policy */
+    // PF_SetReplacementPolicy(PF_REPL_MRU);   /* MRU policy */
 
 	/* create a few files */
 	if ((error=PF_CreateFile(FILE1))!= PFE_OK){
