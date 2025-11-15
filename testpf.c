@@ -1,6 +1,6 @@
 /* testpf.c */
+
 #include <stdio.h>
-#include <string.h>   /* for strcmp */
 #include <stdlib.h>
 #include "pftypes.h"
 #include "pf.h"
@@ -24,7 +24,7 @@ void writefile(char *fname);
 void readfile(char *fname);
 void printfile(int fd);
 
-int main( int argc, char *argv[])
+int main(void)
 {
 int error;
 int i;
@@ -33,23 +33,8 @@ char *buf;
 int *buf1,*buf2;
 int fd1,fd2;
 
-   PF_Init();
-    /* Choose replacement policy from command line:
-       ./testpf lru   or   ./testpf mru
-       Default = LRU if nothing is given or unknown arg. */
-    if (argc > 1 && strcmp(argv[1], "mru") == 0) {
-        PF_SetReplacementPolicy(PF_REPL_MRU);
-        printf("Using MRU replacement policy\n");
-    } else {
-        PF_SetReplacementPolicy(PF_REPL_LRU);
-        printf("Using LRU replacement policy\n");
-    }
-
-    /* Small buffer size so we FORCE replacement to happen */
-    PF_SetBufferSize(5);   /* or 3 or 4 depending on what you want */
-
     PF_ResetStats(); 
-	// // PF_SetReplacementPolicy(PF_REPL_LRU);   /* LRU policy */
+	PF_SetReplacementPolicy(PF_REPL_LRU);   /* LRU policy */
     // PF_SetReplacementPolicy(PF_REPL_MRU);   /* MRU policy */
 
 	/* create a few files */
@@ -178,8 +163,7 @@ int fd1,fd2;
 			PF_PrintError("unfix file1");
 			exit(1);
 		}
-		printf("alloc %d file1\n",i,pagenum);
-
+		printf("alloc page %d (i=%d) file1\n", pagenum, i);
 		if ((error=PF_AllocPage(fd1,&pagenum,&buf))!= PFE_OK){
 			PF_PrintError("first buffer\n");
 			exit(1);
@@ -189,7 +173,7 @@ int fd1,fd2;
 			PF_PrintError("dispose file1");
 			exit(1);
 		}
-		printf("alloc %d file2\n",i,pagenum);
+		printf("alloc page %d (i=%d) file2\n", pagenum, i);
 	}
 
 	for (i= PF_MAX_BUFS; i < PF_MAX_BUFS*2; i++){

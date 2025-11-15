@@ -186,7 +186,7 @@ PFhash_entry *entry;
 		else{
 			for (entry = PFhashtbl[i]; entry != NULL;
 					entry = entry->nextentry)
-				printf("\tfd: %d, page: %d %d\n",
+				printf("\tfd: %d, page: %d %p\n",
 					entry->fd, entry->page,entry->bpage);
 		}
 	}

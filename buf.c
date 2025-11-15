@@ -507,8 +507,8 @@ PFbpage *bpage;
 	else {
 		printf("fd\tpage\tfixed\tdirty\tfpage\n");
 		for(bpage = PFfirstbpage; bpage != NULL; bpage= bpage->nextpage)
-			printf("%d\t%d\t%d\t%d\t%d\n",
+			printf("%d\t%d\t%d\t%d\t%p\n",
 				bpage->fd,bpage->page,(int)bpage->fixed,
-				(int)bpage->dirty,(int)&bpage->fpage);
+				(int)bpage->dirty,(void*)&bpage->fpage);
 	}
 }
