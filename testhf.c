@@ -43,9 +43,9 @@ int main() {
     char *rec2 = "This is a slightly longer, second record.";
     char *rec3 = "This is record three.";
 
-    slot1 = HF_InsertRec(pageBuf, rec1, strlen(rec1) + 1); // +1 for null terminator
-    slot2 = HF_InsertRec(pageBuf, rec2, strlen(rec2) + 1);
-    slot3 = HF_InsertRec(pageBuf, rec3, strlen(rec3) + 1);
+    slot1 = HF_Page_InsertRec(pageBuf, rec1, strlen(rec1) + 1); // +1 for null terminator
+    slot2 = HF_Page_InsertRec(pageBuf, rec2, strlen(rec2) + 1);
+    slot3 = HF_Page_InsertRec(pageBuf, rec3, strlen(rec3) + 1);
 
     if (slot1 < 0 || slot2 < 0 || slot3 < 0) {
         printf("Error inserting record (code: %d)\n", slot1);
@@ -56,7 +56,7 @@ int main() {
 
     // 6. Delete the middle record (slot 2)
     printf("Deleting record at slot %d...\n", slot2);
-    if ((error = HF_DeleteRec(pageBuf, slot2)) != HFE_OK) {
+    if ((error = HF_Page_DeleteRec(pageBuf, slot2)) != HFE_OK) {
         printf("Error deleting record (code: %d)\n", error);
         exit(1);
     }
@@ -68,7 +68,7 @@ int main() {
     char *recordData;
     int recordLen;
 
-    while ((currentSlot = HF_GetNextRec(pageBuf, currentSlot, &recordData, &recordLen)) != HFE_EOF) {
+    while ((currentSlot = HF_Page_GetNextRec(pageBuf, currentSlot, &recordData, &recordLen)) != HFE_EOF) {
         printf("  Found record at slot %d (length %d): '%s'\n", 
                currentSlot, recordLen, recordData);
     }
@@ -76,14 +76,14 @@ int main() {
 
     // 8. Test HF_GetRec directly
     printf("Testing HF_GetRec on slot %d (should be valid)...\n", slot3);
-    if (HF_GetRec(pageBuf, slot3, &recordData, &recordLen) == HFE_OK) {
+    if (HF_Page_GetRec(pageBuf, slot3, &recordData, &recordLen) == HFE_OK) {
         printf("  Got record: '%s'\n", recordData);
     } else {
         printf("  Failed to get record!\n");
     }
 
     printf("Testing HF_GetRec on slot %d (should be deleted)...\n", slot2);
-    if (HF_GetRec(pageBuf, slot2, &recordData, &recordLen) != HFE_OK) {
+    if (HF_Page_GetRec(pageBuf, slot2, &recordData, &recordLen) != HFE_OK) {
         printf("  Correctly failed to get deleted record.\n");
     } else {
         printf("  Error! Got a deleted record!\n");

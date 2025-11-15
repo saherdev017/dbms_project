@@ -24,6 +24,13 @@ typedef struct {
 } HF_SlotEntry;
 
 
+/* A Record ID (RID) uniquely identifies a record in the file.
+ * It consists of the page number and the slot number.
+ */
+typedef struct {
+    int pageNum;
+    int slotNum;
+} RID;
 /*
  * Define some error codes for the HF layer
  */
@@ -40,15 +47,61 @@ typedef struct {
 void HF_InitPage(char *pageBuf);
 
 // Inserts a new record
-int HF_InsertRec(char *pageBuf, char *record, int recLen);
+int HF_Page_InsertRec(char *pageBuf, char *record, int recLen);
 
 // Deletes a record
-int HF_DeleteRec(char *pageBuf, int slotNum);
+int HF_Page_DeleteRec(char *pageBuf, int slotNum);
 
 // Gets a specific record
-int HF_GetRec(char *pageBuf, int slotNum, char **record, int *recLen);
+int HF_Page_GetRec(char *pageBuf, int slotNum, char **record, int *recLen);
 
 // Gets the next valid record
-int HF_GetNextRec(char *pageBuf, int currentSlotNum, char **record, int *recLen);
+int HF_Page_GetNextRec(char *pageBuf, int currentSlotNum, char **record, int *recLen);
+
+/*
+ * Creates a new, empty heap file.
+ */
+int HF_CreateFile(char *fileName);
+
+/*
+ * Opens an existing heap file.
+ * Returns a file descriptor (fd) from the PF layer.
+ */
+int HF_OpenFile(char *fileName);
+
+/*
+ * Closes a heap file.
+ */
+int HF_CloseFile(int fd);
+
+/*
+ * Inserts a record into the file.
+ *
+ * Inputs:
+ * fd: The file descriptor
+ * record: Pointer to the record data
+ * recLen: Length of the record
+ *
+ * Outputs:
+ * rid: The RID of the newly inserted record
+ *
+ * Returns:
+ * HFE_OK on success, or an error code
+ */
+int HF_InsertRec(int fd, char *record, int recLen, RID *rid);
+
+/*
+ * Deletes a record from the file, given its RID.
+ */
+int HF_DeleteRec(int fd, RID rid);
+
+/*
+ * Retrieves a record from the file, given its RID.
+ *
+ * Outputs:
+ * record: Pointer to the record data *within the buffer page*
+ * recLen: Length of the record
+ */
+int HF_GetRec(int fd, RID rid, char **record, int *recLen);
 
 #endif // HF_H

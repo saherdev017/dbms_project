@@ -37,7 +37,7 @@ void HF_InitPage(char *pageBuf) {
  * Returns the new slot number if successful.
  * Returns an error code if it fails.
  */
-int HF_InsertRec(char *pageBuf, char *record, int recLen) {
+int HF_Page_InsertRec(char *pageBuf, char *record, int recLen) {
     HF_PageHeader *header = HF_GetPageHeader(pageBuf);
     HF_SlotEntry *slotArray = HF_GetSlotArray(pageBuf);
     
@@ -90,7 +90,7 @@ int HF_InsertRec(char *pageBuf, char *record, int recLen) {
  * by setting its length to -1. It does not reclaim the space
  * or compact the page.
  */
-int HF_DeleteRec(char *pageBuf, int slotNum) {
+int HF_Page_DeleteRec(char *pageBuf, int slotNum) {
     HF_PageHeader *header = HF_GetPageHeader(pageBuf);
     HF_SlotEntry *slotArray = HF_GetSlotArray(pageBuf);
 
@@ -127,7 +127,7 @@ int HF_DeleteRec(char *pageBuf, int slotNum) {
  * HFE_OK if successful
  * HFE_INVALIDSLOT if the slot is invalid or deleted
  */
-int HF_GetRec(char *pageBuf, int slotNum, char **record, int *recLen) {
+int HF_Page_GetRec(char *pageBuf, int slotNum, char **record, int *recLen) {
     HF_PageHeader *header = HF_GetPageHeader(pageBuf);
     HF_SlotEntry *slotArray = HF_GetSlotArray(pageBuf);
 
@@ -167,7 +167,7 @@ int HF_GetRec(char *pageBuf, int slotNum, char **record, int *recLen) {
  * The slot number of the record found.
  * HFE_EOF if no more valid records are found.
  */
-int HF_GetNextRec(char *pageBuf, int currentSlotNum, char **record, int *recLen) {
+int HF_Page_GetNextRec(char *pageBuf, int currentSlotNum, char **record, int *recLen) {
     HF_PageHeader *header = HF_GetPageHeader(pageBuf);
     HF_SlotEntry *slotArray = HF_GetSlotArray(pageBuf);
 
@@ -188,4 +188,175 @@ int HF_GetNextRec(char *pageBuf, int currentSlotNum, char **record, int *recLen)
 
     // 5. No more valid records were found on this page
     return HFE_EOF;
+}
+
+/*
+ * ======================================================
+ * File-level HF Layer Function Implementations
+ * ======================================================
+ */
+
+/*
+ * Creates a new, empty heap file.
+ * This is just a wrapper for the PF layer.
+ */
+int HF_CreateFile(char *fileName) {
+    // Call the PF layer to create the file
+    if (PF_CreateFile(fileName) != PFE_OK) {
+        return PFerrno; // Return PF layer's error code
+    }
+    return HFE_OK;
+}
+
+/*
+ * Opens an existing heap file.
+ * This is just a wrapper for the PF layer.
+ * Returns a file descriptor (fd) from the PF layer.
+ */
+int HF_OpenFile(char *fileName) {
+    // Call the PF layer to open the file
+    int fd = PF_OpenFile(fileName);
+    if (fd < 0) {
+        return PFerrno; // Return PF layer's error code
+    }
+    return fd; // Return the file descriptor
+}
+
+/*
+ * Closes a heap file.
+ * This is just a wrapper for the PF layer.
+ */
+int HF_CloseFile(int fd) {
+    // Call the PF layer to close the file
+    if (PF_CloseFile(fd) != PFE_OK) {
+        return PFerrno; // Return PF layer's error code
+    }
+    return HFE_OK;
+}
+
+/*
+ * Inserts a record into the file.
+ *
+ * This function scans the file page by page to find one
+ * with enough free space. If no page has space, it
+ * allocates a new page and inserts the record there.
+ */
+int HF_InsertRec(int fd, char *record, int recLen, RID *rid) {
+    int pagenum = -1; // Start scan from the beginning
+    char *pageBuf;
+    int error;
+    int slotNum;
+
+    // 1. Scan the file for a page with free space
+    while ((error = PF_GetNextPage(fd, &pagenum, &pageBuf)) == PFE_OK) {
+        
+        // Try to insert the record on this page
+        // (We call our old page-level insert function)
+        slotNum = HF_Page_InsertRec(pageBuf, record, recLen);
+        
+        if (slotNum == HFE_PAGENOFREE) {
+            // This page is full, unfix it and try the next one
+            if ((error = PF_UnfixPage(fd, pagenum, FALSE)) != PFE_OK) {
+                return error; // Propagate PF error
+            }
+            continue; // Go to the next page
+        }
+        
+        // --- Success! We found space and inserted the record ---
+        
+        // Set the output RID
+        rid->pageNum = pagenum;
+        rid->slotNum = slotNum;
+        
+        // Mark the page as dirty (it was modified) and unfix it
+        if ((error = PF_UnfixPage(fd, pagenum, TRUE)) != PFE_OK) {
+            return error;
+        }
+        
+        // Return success
+        return HFE_OK;
+    }
+    
+    // 2. We reached here, so PF_GetNextPage failed.
+    // Check if it was because we reached the End Of File (EOF).
+    if (error != PFE_EOF) {
+        return error; // It was a real error
+    }
+    
+    // 3. --- No page had free space, so we must allocate a new one ---
+    
+    // Allocate a new page
+    if ((error = PF_AllocPage(fd, &pagenum, &pageBuf)) != PFE_OK) {
+        return error; // Propagate PF error
+    }
+    
+    // Initialize the new page
+    HF_InitPage(pageBuf);
+    
+    // Insert the record (this *must* succeed on a new page)
+    slotNum = HF_Page_InsertRec(pageBuf, record, recLen);
+    
+    // Set the output RID
+    rid->pageNum = pagenum;
+    rid->slotNum = slotNum;
+    
+    // Mark the new page as dirty and unfix it
+    if ((error = PF_UnfixPage(fd, pagenum, TRUE)) != PFE_OK) {
+        return error;
+    }
+
+    return HFE_OK;
+}
+
+/*
+ * Deletes a record from the file, given its RID.
+ */
+int HF_DeleteRec(int fd, RID rid) {
+    char *pageBuf;
+    int error;
+    
+    // 1. Get the specific page the record is on
+    if ((error = PF_GetThisPage(fd, rid.pageNum, &pageBuf)) != PFE_OK) {
+        return error;
+    }
+    
+    // 2. Call our page-level delete function
+    error = HF_Page_DeleteRec(pageBuf, rid.slotNum);
+    
+    // 3. Mark the page as dirty and unfix it
+    if (PF_UnfixPage(fd, rid.pageNum, TRUE) != PFE_OK) {
+        return PFE_UNIX; // Return a generic error if unfix fails
+    }
+    
+    return error; // Return result of HF_DeleteRec
+}
+
+/*
+ * Retrieves a record from the file, given its RID.
+ *
+ * Outputs:
+ * record: Pointer to the record data *within the buffer page*
+ * recLen: Length of the record
+ *
+ * WARNING: The 'record' pointer is only valid until the page
+ * is unfixed. The caller must copy the data if needed.
+ */
+int HF_GetRec(int fd, RID rid, char **record, int *recLen) {
+    char *pageBuf;
+    int error;
+
+    // 1. Get the specific page the record is on
+    if ((error = PF_GetThisPage(fd, rid.pageNum, &pageBuf)) != PFE_OK) {
+        return error;
+    }
+
+    // 2. Call our page-level get function
+    error = HF_Page_GetRec(pageBuf, rid.slotNum, record, recLen);
+
+    // 3. Unfix the page (it wasn't modified)
+    if (PF_UnfixPage(fd, rid.pageNum, FALSE) != PFE_OK) {
+        return PFE_UNIX;
+    }
+
+    return error; // Return result of HF_Page_GetRec
 }
