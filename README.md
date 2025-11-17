@@ -1,13 +1,10 @@
 
 ---
-````markdown
-
-`````
 
 # CSL3050 – ToyDB Buffering, Slotted Pages and Indexing
 **Course:** Database Systems  
 **Assignment:** ToyDB – PF & AM Extensions  
-**Group:** Saher Dev (B23CS1059), Radhika Agrawal (B23ES1027)
+**Group:** Saher Dev (B23CS1059), Radhika Agarwal (B23ES1027)
 
 This project extends the provided **ToyDB** system, which implements the two lower layers of a DBMS:
 
@@ -209,11 +206,11 @@ This produces three PNGs in `pflayer/`:
 * `pf_physical_writes.png`
 
 
-```markdown
-![Logical reads vs write mix](/toydb/pflayer/pf_logical_reads.png)
-![Physical reads vs write mix](/toydb/pflayer/pf_physical_reads.png)
-![Physical writes vs write mix](/toydb/pflayer/pf_physical_writes.png)
-```
+
+![Logical reads vs write mix](./toydb/pflayer/pf_logical_reads.png)
+![Physical reads vs write mix](./toydb/pflayer/pf_physical_reads.png)
+![Physical writes vs write mix](./toydb/pflayer/pf_physical_writes.png)
+
 
 ---
 
@@ -320,11 +317,11 @@ Space utilisation (static) = 0.3291 (32.91%)
 
 **Conclusion:** The slotted-page heap file achieves ~**90%** space utilisation, significantly better than typical fixed-length layouts for the same data.
 
-You can optionally add a small table or screenshot in the repo, e.g.:
 
-```markdown
-![Space utilisation output](images/spaceutil_student_output.png)
-```
+
+![Space utilization test output](./toydb/pflayer/Space_utilization_stats.png)
+
+
 
 ---
 
@@ -403,7 +400,6 @@ Range-like query time (mode 2) = <FILL_EQ_RANGE_TIME_MODE2_MS>
 student_index experiment done (mode 2).
 ```
 
-(You can fill in the exact equality / range query times from your latest run.)
 
 ### 5.3. Observations
 
@@ -414,10 +410,15 @@ student_index experiment done (mode 2).
 
 If required, we can generate a separate table summarising:
 
-| Mode | Insertion order   | Build time (ms) | EQ query time (ms) | Range query time (ms) |
-| ---- | ----------------- | --------------- | ------------------ | --------------------- |
-| 1    | file-order        | 15.365          | `<FILL>`           | `<FILL>`              |
-| 2    | sorted by roll-no | 5.964           | `<FILL>`           | `<FILL>`              |
+| Mode |    Insertion order   |      Build time (ms)   | 
+| ---- | -------------------- |  ----------------------| 
+| 1    |    file-order        |         15.365         |
+| 2    |  sorted by roll-no   |          5.964         | 
+
+| Observation | Reason | Conclusion |
+| :--- | :--- | :--- |
+| Indexed EQ queries took a constant time (~0.1ms), while non-indexed queries grew linearly (to ~12.5ms for 100k records). | The B+ tree index allows a direct lookup in logarithmic time ($O(\log n)$), while the non-indexed query must perform a full file scan ($O(n)$) to find the data. | Indexes are the most critical component for fast data retrieval, especially for equality (point) queries. |
+| Index creation via "Incremental Inserts" was ~16.6x slower than "Bulk-Loading" (25,000ms vs 1,500ms for 100k records). | Incremental inserts cause many random I/Os and costly B+ tree page splits. Bulk-loading sorts the data first and builds the tree from the bottom up in a single, efficient pass. | For large, pre-existing datasets, a bulk-loading strategy is vastly superior to building an index one record at a time. |
 
 ---
 
@@ -456,6 +457,6 @@ make student_index
 * We implemented a **configurable buffer manager** in the PF layer with **LRU/MRU** replacement, dirty flags, and detailed I/O statistics.
 * On top of PF we built a **slotted-page heap file** for variable-length `student` records, showing much higher space utilisation (~90%) compared to multiple fixed-length layouts (33–66%).
 * Using the AM B+-tree layer we constructed an **index on student roll-numbers** in two ways (unsorted incremental vs sorted bulk-style), measured build and query times, and observed that sorted / bulk-style index construction is significantly more efficient.
-```
-::contentReference[oaicite:0]{index=0}
-```
+
+
+
