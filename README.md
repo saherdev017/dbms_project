@@ -375,6 +375,7 @@ Range-like query time (mode 1) = <FILL_EQ_RANGE_TIME_MODE1_MS>
 
 student_index experiment done (mode 1).
 ```
+![Unsorted (mode 1) test output](./toydb/pflayer/mode1.png)
 
 ```text
 $ ./student_index ../../data/student.txt 2
@@ -399,7 +400,7 @@ Range-like query time (mode 2) = <FILL_EQ_RANGE_TIME_MODE2_MS>
 
 student_index experiment done (mode 2).
 ```
-
+![Sorted (mode 2) test output](./toydb/pflayer/mode2.png)
 
 ### 5.3. Observations
 
