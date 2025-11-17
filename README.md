@@ -172,20 +172,20 @@ PF statistics:
   physicalWrites= 242
 ```
 
-Our observed PF statistics (example run):
+Our observed PF statistics :
 
 | Mix (W/R) | Policy | logicalReads | logicalWrites | physicalReads | physicalWrites |
 | --------- | ------ | ------------ | ------------- | ------------- | -------------- |
-| 0/100     | LRU    | 1000         | 0             | 914           | 5              |
-| 25/75     | LRU    | 1000         | 0             | 904           | 242            |
-| 50/50     | LRU    | 1000         | 0             | 897           | 527            |
-| 75/25     | LRU    | 1000         | 0             | 911           | 684            |
-| 100/0     | LRU    | 1000         | 0             | 910           | 910            |
-| 0/100     | MRU    | 1000         | 0             | 9xx           | 5              |
-| 25/75     | MRU    | 1000         | 0             | 8xx           | 248            |
-| 50/50     | MRU    | 1000         | 0             | 9xx           | 497            |
-| 75/25     | MRU    | 1000         | 0             | 9xx           | 720            |
-| 100/0     | MRU    | 1000         | 0             | 9xx           | 913            |
+| 0/100     | LRU    | 1000         | 0             | 903           | 5              |
+| 25/75     | LRU    | 1000         | 0             | 892           | 242            |
+| 50/50     | LRU    | 1000         | 0             | 914           | 497            |
+| 75/25     | LRU    | 1000         | 0             | 911           | 720            |
+| 100/0     | LRU    | 1000         | 0             | 913           | 913            |
+| 0/100     | MRU    | 1000         | 0             | 910           | 5              |
+| 25/75     | MRU    | 1000         | 0             | 807           | 248            |
+| 50/50     | MRU    | 1000         | 0             | 911           | 497            |
+| 75/25     | MRU    | 1000         | 0             | 900           | 720            |
+| 100/0     | MRU    | 1000         | 0             | 901           | 913            |
 
 (Exact MRU numbers can be read from the `pfbench` output if needed.)
 
