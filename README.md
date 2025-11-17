@@ -371,7 +371,7 @@ Equality query: roll = 95302001
 Total matches (EQ) = 1
 ...
 Matches with roll >= 1026006 : 15316 (not filtered by upper bound here)
-Range-like query time (mode 1) = <FILL_EQ_RANGE_TIME_MODE1_MS>
+
 
 student_index experiment done (mode 1).
 ```
